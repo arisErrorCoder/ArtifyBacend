@@ -41,7 +41,7 @@ exports.addToCart = async (req, res, next) => {
       req.files.forEach(file => {
         processedFiles.push({
           name: file.originalname,
-          url: `/uploads-cart/cart/${file.filename}`,
+          url: `/uploads-cart/${file.filename}`,
           path: file.path
         });
       });
