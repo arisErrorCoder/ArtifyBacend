@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 650px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      padding: 30px 20px;
+      text-align: center;
+      color: white;
+    }
+    .logo {
+      max-width: 180px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .header p {
+      margin: 10px 0 0;
+      opacity: 0.9;
+    }
+    .order-details {
+      padding: 25px;
+      border-bottom: 1px solid #eee;
+    }
+    .order-details h2 {
+      color: #4f46e5;
+      font-size: 20px;
+      margin-top: 0;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 10px;
+    }
+    .item {
+      display: flex;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f0f0f0;
+      align-items: center;
+    }
+    .item:last-child {
+      border-bottom: none;
+    }
+    .item-image {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-right: 20px;
+      border: 1px solid #eee;
+    }
+    .item-details {
+      flex: 1;
+    }
+    .item-details h3 {
+      margin: 0 0 5px;
+      color: #333;
+    }
+    .item-details p {
+      margin: 5px 0;
+      color: #666;
+    }
+    .totals {
+      margin-top: 25px;
+      background: #f9fafb;
+      padding: 15px;
+      border-radius: 6px;
+    }
+    .totals p {
+      margin: 8px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    .totals strong {
+      color: #333;
+    }
+    .total-amount {
+      font-size: 18px;
+      font-weight: 600;
+      color: #4f46e5;
+      border-top: 1px solid #eee;
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+    .customer-info {
+      padding: 25px;
+      background: #f9fafb;
+    }
+    .customer-info h2 {
+      color: #4f46e5;
+      font-size: 20px;
+      margin-top: 0;
+    }
+    .customer-info p {
+      margin: 8px 0;
+    }
+    .action-buttons {
+      padding: 20px;
+      text-align: center;
+      background: white;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #4f46e5;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+      margin: 0 10px;
+      transition: all 0.3s;
+    }
+    .btn:hover {
+      background: #4338ca;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+    .footer {
+      padding: 20px;
+      font-size: 12px;
+      color: #777;
+      text-align: center;
+      background: #f9fafb;
+    }
+    .footer-links {
+      margin-top: 15px;
+    }
+    .footer-links a {
+      color: #4f46e5;
+      text-decoration: none;
+      margin: 0 10px;
+    }
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+    .order-number {
+      background: rgba(255,255,255,0.1);
+      padding: 5px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      font-weight: 600;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #d1fae5;
+      color: #065f46;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <!-- Replace with your actual logo URL -->
+      <img src="https://yatratechs.com/gallery/ytlogo.png" alt="Company Logo" class="logo">
+      <h1>New Order Received!</h1>
+      <p>Order <span class="order-number">#<%= order._id.toString().slice(-6).toUpperCase() %></span> has been placed <span class="status-badge">Processing</span></p>
+    </div>
+    
+    <div class="order-details">
+      <h2>Order Summary</h2>
+      
+      <% order.items.forEach(item => { %>
+        <div class="item">
+          <img src="<%= item.image %>" alt="<%= item.name %>" class="item-image">
+          <div class="item-details">
+            <h3><%= item.name %></h3>
+            <p>Quantity: <%= item.quantity %></p>
+            <p>Price: ₹<%= (item.price * item.quantity).toLocaleString('en-IN') %></p>
+            <% if (item.clientInfo) { %>
+              <p><strong>Client Details:</strong> <%= item.clientInfo.name %> (<%= item.clientInfo.phone %>)</p>
+            <% } %>
+          </div>
+        </div>
+      <% }); %>
+      
+      <div class="totals">
+        <p><strong>Subtotal:</strong> ₹<%= order.subtotal.toLocaleString('en-IN') %></p>
+        <% if (order.discount > 0) { %>
+          <p><strong>Discount:</strong> -₹<%= order.discount.toLocaleString('en-IN') %></p>
+        <% } %>
+        <p><strong>GST (18%):</strong> ₹<%= order.gst.toLocaleString('en-IN') %></p>
+        <p class="total-amount"><strong>Total Amount:</strong> ₹<%= order.total.toLocaleString('en-IN') %></p>
+      </div>
+    </div>
+    
+    <div class="customer-info">
+      <h2>Customer Information</h2>
+      <p><strong><%= order.billingDetails.firstName %> <%= order.billingDetails.lastName %></strong></p>
+      <p><%= order.billingDetails.email %></p>
+      <p><%= order.billingDetails.phone %></p>
+      <p><%= order.billingDetails.address %>, <%= order.billingDetails.city %></p>
+      <p><%= order.billingDetails.state %>, <%= order.billingDetails.zipCode %>, <%= order.billingDetails.country %></p>
+      <% if (order.billingDetails.organizationName) { %>
+        <p><strong>Organization:</strong> <%= order.billingDetails.organizationName %></p>
+        <p><strong>GST Number:</strong> <%= order.billingDetails.gstNumber %></p>
+      <% } %>
+    </div>
+    
+    <div class="action-buttons">
+      <a href="https://adminartify.netlify.app/" class="btn">View in Admin Panel</a>
+      <a href="https://example.com/contact" class="btn btn-secondary">Contact Support</a>
+    </div>
+    
+    <div class="footer">
+      <p>Please process this order within 24 hours. For any questions, contact our support team.</p>
+      <div class="footer-links">
+        <a href="https://example.com/terms">Terms of Service</a>
+        <a href="https://example.com/privacy">Privacy Policy</a>
+        <a href="https://example.com/contact">Contact Us</a>
+      </div>
+      <p>© <%= new Date().getFullYear() %> Your Company Name. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
