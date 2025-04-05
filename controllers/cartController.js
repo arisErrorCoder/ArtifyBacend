@@ -5,7 +5,7 @@ const { NotFoundError, BadRequestError } = require('../middleware/error');
 
 exports.addToCart = async (req, res, next) => {
   try {
-    const { productId } = req.body;
+    const { productId ,quantity } = req.body;
     
     // Validate product ID
     if (!mongoose.Types.ObjectId.isValid(productId)) {
@@ -58,7 +58,7 @@ exports.addToCart = async (req, res, next) => {
     // Add new item to cart
     cart.items.push({
       product: productId,
-      quantity: 1, // Default quantity
+      quantity: quantity, // Default quantity
       price: product.price,
       clientInfo: {
         name: clientInfo.name || '',
