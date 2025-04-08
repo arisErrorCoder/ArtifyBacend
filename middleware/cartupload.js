@@ -21,17 +21,19 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
-    'image/jpeg', 
-    'image/png', 
+    'image/jpeg',
+    'image/png',
     'application/pdf',
     'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/zip', // ✅ added ZIP MIME type
+    'application/x-zip-compressed' // ✅ some systems may use this MIME type
   ];
-  
+
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only JPEG, PNG, PDF, and Word documents are allowed.'), false);
+    cb(new Error('Invalid file type. Only JPEG, PNG, PDF, Word, and ZIP files are allowed.'), false);
   }
 };
 

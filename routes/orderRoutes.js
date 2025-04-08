@@ -8,5 +8,7 @@ router.get('/:id', orderController.getOrderById);
 router.get('/user-orders/:userId', orderController.getUserOrders);
 router.get('/', orderController.getAllOrders);
 router.put('/update-status/:id', orderController.updateOrderStatus);
+router.get('/dashboard-stats', orderController.getDashboardStats);
+
 
 module.exports = router;

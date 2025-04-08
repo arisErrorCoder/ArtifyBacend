@@ -1,0 +1,47 @@
+<!-- templates/welcomeEmail.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to Our Newsletter</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f9fa; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to Our Newsletter!</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hello,</p>
+            <p>Thank you for subscribing to our newsletter. You'll now receive updates about our latest products, services, and company news.</p>
+            
+            <p>Here's what you can expect:</p>
+            <ul>
+                <li>Monthly updates with our latest content</li>
+                <li>Exclusive offers for subscribers</li>
+                <li>Early access to new features</li>
+            </ul>
+            
+            <p>If you ever wish to unsubscribe, you can do so at any time by clicking the unsubscribe link in our emails.</p>
+            
+            <p>Thanks again for joining us!</p>
+            <p><strong>The Your Company Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; <%= currentYear %> Your Company. All rights reserved.</p>
+            <p>
+                <a href="[YOUR_WEBSITE_URL]/privacy-policy">Privacy Policy</a> | 
+                <a href="[YOUR_WEBSITE_URL]/terms">Terms of Service</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

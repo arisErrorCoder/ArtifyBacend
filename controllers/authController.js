@@ -1,3 +1,4 @@
+const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -123,6 +124,7 @@ exports.getMe = async (req, res, next) => {
 // @desc    Forgot password
 // @route   POST /api/auth/forgotpassword
 // @access  Public
+
 exports.forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -136,18 +138,93 @@ exports.forgotPassword = async (req, res, next) => {
     const resetToken = user.getResetPasswordToken();
     await user.save({ validateBeforeSave: false });
 
-    // TODO: Send email with reset token
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/resetpassword/${resetToken}`;
+    // Create reset URL
+    const resetUrl = `${req.protocol}://brandingnewwebapp.netlify.app/resetpassword/${resetToken}`;
+
+    // Create email transporter
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      secure: process.env.EMAIL_SECURE === 'true',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD}})
+
+    // Email options
+    const mailOptions = {
+      from: `"Artify Support" <${process.env.EMAIL_USERNAME}>`,
+      to: user.email,
+      subject: 'Password Reset Request',
+      html: generateResetEmail(user.name, resetUrl)
+    };
+
+    // Send email
+    await transporter.sendMail(mailOptions);
 
     res.status(200).json({ 
       success: true, 
-      data: 'Email sent',
-      resetUrl // In production, you would send this via email
+      data: 'Password reset email sent'
     });
   } catch (err) {
+    // Clear reset token if error occurs
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+    
     next(err);
   }
 };
+
+// Email template generator
+function generateResetEmail(name, resetUrl) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Password Reset</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #4a6baf; padding: 20px; text-align: center; }
+        .header h1 { color: white; margin: 0; }
+        .content { padding: 30px; background-color: #f9f9f9; }
+        .button {
+          display: inline-block;
+          padding: 12px 24px;
+          background-color: #4a6baf;
+          color: white !important;
+          text-decoration: none;
+          border-radius: 4px;
+          font-weight: bold;
+          margin: 20px 0;
+        }
+        .footer { margin-top: 30px; font-size: 12px; text-align: center; color: #777; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Artify Design Studio</h1>
+        </div>
+        <div class="content">
+          <h2>Hello ${name},</h2>
+          <p>We received a request to reset your password for your Artify account.</p>
+          <p>Please click the button below to reset your password:</p>
+          <a href="${resetUrl}" class="button">Reset Password</a>
+          <p>If you didn't request this password reset, please ignore this email.</p>
+          <p>This password reset link will expire in 30 minutes.</p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} Artify Design Studio. All rights reserved.</p>
+          <p>If you're having trouble with the button above, copy and paste this link into your browser:</p>
+          <p>${resetUrl}</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
 
 // @desc    Reset password
 // @route   PUT /api/auth/resetpassword/:resettoken
@@ -166,7 +243,10 @@ exports.resetPassword = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(400).json({ success: false, error: 'Invalid or expired token' });
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid or expired token' 
+      });
     }
 
     // Set new password
@@ -181,13 +261,11 @@ exports.resetPassword = async (req, res, next) => {
     res.status(200).json({ 
       success: true, 
       token,
-      user: {
+      data: {
         id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        name: user.name,
         email: user.email,
-        username: user.username,
-        accountType: user.accountType
+        role: user.role
       }
     });
   } catch (err) {

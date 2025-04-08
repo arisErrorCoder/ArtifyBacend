@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
+const mongoose = require('mongoose');
 
 // Create a new order
 exports.createOrder = async (req, res) => {
@@ -110,6 +111,12 @@ exports.getUserOrders = async (req, res) => {
 
 // Get order by ID
 exports.getOrderById = async (req, res) => {
+  const orderId = req.params.id;
+
+    // ✅ Check if the ID is a valid Mongo ObjectId
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({ error: 'Invalid order ID format' });
+    }
   try {
     const order = await Order.findById(req.params.id)
       .populate('user', 'firstName lastName email')
@@ -170,5 +177,104 @@ exports.processPaymentSuccess = async (paymentIntentId) => {
   } catch (error) {
     console.error('Error processing payment success:', error);
     throw error;
+  }
+};
+
+
+
+// @desc    Get dashboard statistics
+// @route   GET /api/orders/dashboard-stats
+exports.getDashboardStats = async (req, res) => {
+  try {
+    // Calculate date ranges for comparison
+    const currentDate = new Date();
+    const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const prevMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const prevMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+    
+    // Get total revenue
+    const totalRevenueResult = await Order.aggregate([
+      { $match: { paymentStatus: 'succeeded' } },
+      { $group: { _id: null, total: { $sum: '$total' } } }
+    ]);
+    const totalRevenue = totalRevenueResult[0]?.total || 0;
+    
+    // Get current month revenue
+    const currentMonthRevenueResult = await Order.aggregate([
+      { 
+        $match: { 
+          paymentStatus: 'succeeded',
+          createdAt: { $gte: currentMonthStart }
+        } 
+      },
+      { $group: { _id: null, total: { $sum: '$total' } } }
+    ]);
+    const currentMonthRevenue = currentMonthRevenueResult[0]?.total || 0;
+    
+    // Get previous month revenue
+    const prevMonthRevenueResult = await Order.aggregate([
+      { 
+        $match: { 
+          paymentStatus: 'succeeded',
+          createdAt: { $gte: prevMonthStart, $lte: prevMonthEnd }
+        } 
+      },
+      { $group: { _id: null, total: { $sum: '$total' } } }
+    ]);
+    const prevMonthRevenue = prevMonthRevenueResult[0]?.total || 0;
+    
+    // Calculate revenue change percentage
+    const revenueChange = prevMonthRevenue > 0 
+      ? Math.round(((currentMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100)
+      : currentMonthRevenue > 0 ? 100 : 0;
+    
+    // Get order counts
+    const totalOrders = await Order.countDocuments();
+    const currentMonthOrders = await Order.countDocuments({ createdAt: { $gte: currentMonthStart } });
+    const prevMonthOrders = await Order.countDocuments({ 
+      createdAt: { $gte: prevMonthStart, $lte: prevMonthEnd } 
+    });
+    
+    // Calculate orders change percentage
+    const ordersChange = prevMonthOrders > 0 
+    ? Math.round(((currentMonthOrders - prevMonthOrders) / prevMonthOrders * 100))
+    : currentMonthOrders > 0 ? 100 : 0;
+    
+    // Get customer counts
+    const totalCustomers = await User.countDocuments();
+    const newCustomersThisMonth = await User.countDocuments({ 
+      createdAt: { $gte: currentMonthStart } 
+    });
+    const newCustomersLastMonth = await User.countDocuments({ 
+      createdAt: { $gte: prevMonthStart, $lte: prevMonthEnd } 
+    });
+    
+    // Calculate customers change percentage
+    const customersChange = newCustomersLastMonth > 0 
+    ? Math.round(((newCustomersThisMonth - newCustomersLastMonth) / newCustomersLastMonth * 100))
+    : newCustomersThisMonth > 0 ? 100 : 0;
+    
+    res.json({
+      success: true,
+      data: {
+        totalRevenue,
+        currentMonthRevenue,
+        prevMonthRevenue,
+        revenueChange,
+        totalOrders,
+        newOrders: currentMonthOrders,
+        ordersChange,
+        totalCustomers,
+        newCustomers: newCustomersThisMonth,
+        customersChange
+      }
+    });
+  } catch (error) {
+    console.error('Error getting dashboard stats:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Server error',
+      message: error.message 
+    });
   }
 };

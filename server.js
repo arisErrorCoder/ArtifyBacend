@@ -7,6 +7,10 @@ const authRoutes = require('./routes/authRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const productRoutes = require('./routes/productRoutes');
+const couponRoutes = require('./routes/couponRoutes');
+const dashboard = require('./routes/dashboard');
+const faqRoutes = require('./routes/faqRoutes');
+const newsletterRoutes = require('./routes/newsletterRoutes');
 const {errorHandler} = require('./middleware/error');
 const path = require('path');
 const fs = require('fs');
@@ -23,7 +27,7 @@ connectDB();
 app.use(errorHandler);
 app.use(cookieParser  ());
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads/products')));
-app.use('/uploads-cart', express.static(path.join(__dirname, 'uploads/cart')));
+app.use('/uploads-cart', express.static(path.join(__dirname, 'public/uploads/cart/')));
 
 
 
@@ -42,6 +46,13 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/coupons', couponRoutes);
+app.use('/api/dashboard', dashboard);
+app.use('/api/faq', faqRoutes);
+app.use('/api/newsletter', newsletterRoutes);
+app.use('/api/reviews', require('./routes/reviewRoutes'));
+
+
 
 
 // Health check
