@@ -51,6 +51,7 @@ app.use('/api/dashboard', dashboard);
 app.use('/api/faq', faqRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/reviews', require('./routes/reviewRoutes'));
+app.use('/api/careers', require('./routes/careerRoutes'));
 
 
 
