@@ -66,7 +66,7 @@ exports.createProduct = asyncHandler(async (req, res, next) => {
   if (req.files) {
     req.files.forEach(file => {
       images.push({
-        url: `/uploads/${filename}`,
+        url: `/uploads/${file.filename}`,  // Changed from filename to file.filename
         filename: file.filename,
         format: path.extname(file.originalname).substring(1).toLowerCase()
       });
@@ -259,4 +259,118 @@ exports.toggleProductStatus = asyncHandler(async (req, res, next) => {
     success: true,
     data: product
   });
+});
+
+// @desc      Bulk upload products
+// @route     POST /api/v1/products/bulk
+// @access    Private/Admin
+exports.bulkUploadProducts = asyncHandler(async (req, res, next) => {
+  const { products } = req.body;
+
+  // Validate input
+  if (!products || !Array.isArray(products)) {
+    return next(new ErrorResponse('Please provide an array of products', 400));
+  }
+
+  if (products.length === 0) {
+    return next(new ErrorResponse('Products array cannot be empty', 400));
+  }
+
+  if (products.length > 100) {
+    return next(new ErrorResponse('Cannot upload more than 100 products at once', 400));
+  }
+
+  try {
+    // Validate each product
+    const validatedProducts = [];
+    const errors = [];
+
+    await Promise.all(products.map(async (product, index) => {
+      // Basic validation
+      if (!product.name || !product.category) {
+        errors.push(`Product at index ${index} is missing required fields (name or category)`);
+        return;
+      }
+
+      // Check for duplicate names in this batch
+      const duplicateInBatch = validatedProducts.some(p => p.name === product.name);
+      if (duplicateInBatch) {
+        errors.push(`Duplicate product name found in batch: ${product.name}`);
+        return;
+      }
+
+      // Check if product already exists in database
+      const existingProduct = await Product.findOne({ name: product.name });
+      if (existingProduct) {
+        errors.push(`Product already exists: ${product.name}`);
+        return;
+      }
+
+      // Set default values
+      const newProduct = {
+        name: product.name,
+        images: product.images || [],
+        price: product.price || 0,
+        originalPrice: product.originalPrice || product.price || 0,
+        discount: product.discount || '',
+        category: product.category,
+        subcategory: product.subcategory || '',
+        rating: product.rating || 0,
+        reviewCount: product.reviewCount || 0,
+        size: product.size || '',
+        revisions: product.revisions || 0,
+        deliveryTime: product.deliveryTime || '',
+        quantityUnit: product.quantityUnit || '',
+        description: product.description || '',
+        clientNeedsToProvide: product.clientNeedsToProvide || [],
+        features: product.features || [],
+        includes: product.includes || [],
+        excludes: product.excludes || [],
+        status: product.status || 'active',
+        createdAt: product.createdAt || Date.now()
+      };
+
+      validatedProducts.push(newProduct);
+    }));
+
+    if (errors.length > 0) {
+      return next(new ErrorResponse(`Validation errors: ${errors.join('; ')}`, 400));
+    }
+
+    if (validatedProducts.length === 0) {
+      return next(new ErrorResponse('No valid products to upload', 400));
+    }
+
+    // Insert products
+    const result = await Product.insertMany(validatedProducts, { ordered: false });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        insertedCount: result.length,
+        products: result
+      }
+    });
+
+  } catch (error) {
+    console.error('Bulk upload error:', error);
+
+    // Handle specific MongoDB errors
+    if (error.name === 'BulkWriteError') {
+      const writeErrors = error.writeErrors || [];
+      const errorMessages = writeErrors.map(err => {
+        return `Product ${err.op.name}: ${err.errmsg}`;
+      });
+
+      return next(new ErrorResponse(
+        `Partial success. Some products failed to upload: ${errorMessages.join('; ')}`,
+        207 // Multi-status
+      ));
+    }
+
+    return next(new ErrorResponse(
+      `Error during bulk upload: ${error.message}`,
+      500
+    ));
+  }
 });

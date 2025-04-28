@@ -10,6 +10,8 @@ const productRoutes = require('./routes/productRoutes');
 const couponRoutes = require('./routes/couponRoutes');
 const dashboard = require('./routes/dashboard');
 const faqRoutes = require('./routes/faqRoutes');
+const rateLimit = require('express-rate-limit');
+const contactRoutes = require('./routes/contactRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes');
 const {errorHandler} = require('./middleware/error');
 const path = require('path');
@@ -39,6 +41,14 @@ app.use(express.json());
 
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
 
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: 'Too many contact requests from this IP, please try again later'
+});
+
+// Routes
 // Routes
 
 app.use('/api/orders', orderRoutes);
@@ -52,6 +62,7 @@ app.use('/api/faq', faqRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/careers', require('./routes/careerRoutes'));
+app.use('/api/contact', limiter, contactRoutes);
 
 
 

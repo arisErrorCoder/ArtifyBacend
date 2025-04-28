@@ -6,6 +6,7 @@ const {
   getAllProducts,
   getProduct,
   createProduct,
+  bulkUploadProducts,
   updateProduct,
   deleteProduct,
   toggleProductStatus
@@ -32,4 +33,8 @@ router.route('/')
 router.route('/:id/status')
   .patch(toggleProductStatus);
 
+  router.post(
+    '/bulk',
+     bulkUploadProducts
+  );
 module.exports = router;
